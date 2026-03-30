@@ -1,0 +1,104 @@
+<?php
+// shaka-player.php
+
+// Allowed domains
+$allowedDomains = [
+    'mhdtvliv.com',
+    'durbintv.com',
+    'mhdtvp.com'
+];
+
+// Check HTTP referer
+$referer = isset($_SERVER['HTTP_REFERER']) ? parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST) : '';
+
+if (!in_array($referer, $allowedDomains)) {
+    header('HTTP/1.0 403 Forbidden');
+    echo "<h1>Access Denied</h1><p>Player can only be used on allowed domains.</p>";
+    exit;
+}
+
+// Get video URL
+$videoUrl = isset($_GET['url']) ? $_GET['url'] : '';
+?>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MHDTVLIV Shaka Player</title>
+
+  <!-- Shaka Player -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+    }
+
+    /* Fullscreen Video */
+    #video {
+      width: 100%;
+      height: 100%;
+      background: black;
+    }
+
+    /* Full-display logo / watermark */
+    #logo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* keep aspect ratio */
+      opacity: 0.15; /* watermark effect */
+      z-index: 10;
+      pointer-events: none; /* clicks go through video */
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Full-display Logo -->
+  <img id="logo" src="https://bsports.moviesflixter.com/1000078651-Photoroom.png" alt="MHDTVLIV Logo">
+
+  <!-- Video -->
+  <video id="video" autoplay controls></video>
+
+  <script>
+    function initApp() {
+      shaka.polyfill.installAll();
+
+      if (!shaka.Player.isBrowserSupported()) {
+        alert('Browser not supported!');
+        return;
+      }
+
+      const video = document.getElementById('video');
+      const player = new shaka.Player(video);
+
+      player.addEventListener('error', function(event) {
+        console.error('Shaka Player Error', event.detail);
+      });
+
+      const manifestUri = "<?php echo htmlspecialchars($videoUrl); ?>";
+
+      if (!manifestUri) {
+        alert("No video URL provided!");
+        return;
+      }
+
+      player.load(manifestUri).then(() => {
+        console.log('Video loaded successfully!');
+      }).catch((error) => {
+        console.error('Error loading video:', error);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+
+</body>
+</html>
